@@ -1,10 +1,12 @@
 insightface
+fastapi
+uvicorn
+python-multipart
 torch
 torchvision
 numpy
 patch-ng
 gfpgan
---index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 onnxruntime-gpu
 
 

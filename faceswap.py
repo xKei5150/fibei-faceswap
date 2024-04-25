@@ -1,22 +1,33 @@
+# faceswap.py
 import numpy as np
 import cv2
 import insightface
 import gfpgan
-import torch
-
+import io
 from insightface.app import FaceAnalysis
 from insightface.data import get_image as ins_get_image
+
+
+def load_models():
+    app = FaceAnalysis(name='buffalo_l', det_size=(640, 640))
+    app.prepare(ctx_id=0)
+    swapper = insightface.model_zoo.get_model('models/inswapper_128.onnx', download=False, download_zip=False)
+    upscaler = gfpgan.GFPGANer(model_path='models/GFPGANv1.4.pth', upscale=1, arch='clean', bg_upsampler=None)
+    return app, swapper, upscaler
 
 
 def load_image(image_path):
     return cv2.imread(image_path)
 
+
 def face_detection(image, app):
-    return app.get(image)
+    faces = app.get(image)
+    return faces
 
 
 def face_swap(source_image, target_face, source_face, swapper):
-    return swapper.get(source_image, target_face, source_face, paste_back=True)
+    swapped_face = swapper.get(source_image, target_face, source_face, paste_back=True)
+    return swapped_face
 
 
 def face_upscale(image, upscaler):
@@ -34,7 +45,7 @@ def process_frame(frame, app, swapper, upscaler, source_face):
     return processed_frames
 
 
-def process_video(video_path, output_video_path, app, swapper, upscaler, source_face):
+def process_video(video_path, app, swapper, upscaler, source_face):
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         print("Error: Could not open the video file.")
@@ -45,7 +56,7 @@ def process_video(video_path, output_video_path, app, swapper, upscaler, source_
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    output_video = cv2.VideoWriter(output_video_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
+    output_video = cv2.VideoWriter('output_video.mp4', cv2.VideoWriter_fourcc(*'mp4v'), fps, (width, height))
     print("Started")
 
     try:
@@ -68,24 +79,21 @@ def process_video(video_path, output_video_path, app, swapper, upscaler, source_
         output_video.release()
         cv2.destroyAllWindows()
 
+    return 'output_files/output_video.mp4'
 
-def main():
+
+def main(source_image_path, video_path, output_video_path):
+    source_image = load_image(source_image_path)
+    app, swapper, upscaler = load_models()
+    source_faces = face_detection(source_image, app)
+    source_face = source_faces[0]
+
+    process_video(video_path, app, swapper, upscaler, source_face)
+
+
+if __name__ == "__main__":
     source_image_path = 'assets/source.jpg'
     video_path = 'assets/target-1080p.mp4'
     output_video_path = 'assets/output_video.mp4'
 
-    source_image = load_image(source_image_path)
-    app = insightface.app.FaceAnalysis(name='buffalo_l', det_size=(640, 640))
-    app.prepare(ctx_id=0)
-    source_faces = face_detection(source_image, app)
-    source_face = source_faces[0]
-    swapper = insightface.model_zoo.get_model('models/inswapper_128.onnx',
-                                              download=False, download_zip=False)
-    upscaler = gfpgan.GFPGANer(model_path='models/GFPGANv1.4.pth',
-                               upscale=1, arch='clean', bg_upsampler=None)
-
-    process_video(video_path, output_video_path, app, swapper, upscaler, source_face)
-
-
-if __name__ == "__main__":
-    main()
+    main(source_image_path, video_path, output_video_path)
