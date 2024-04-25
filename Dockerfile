@@ -1,19 +1,20 @@
-FROM python:3.9-slim
+FROM python:3.9
 
-# Set the working directory
-WORKDIR /
+WORKDIR /app
 
-# Copy the requirements file
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    libgl1-mesa-glx \
+    gcc && \
+    rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 
-# Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
 COPY . .
 
-# Expose the port on which your FastAPI app will run (if applicable)
 EXPOSE 8000
 
-# Set the command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "endpoint:app", "--host", "0.0.0.0", "--port", "8000"]

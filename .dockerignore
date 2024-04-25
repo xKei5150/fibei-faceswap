@@ -10,6 +10,7 @@ __pycache__
 logs/
 output_files/
 venv/
+.venv/
 config/local_settings.py
 tests/
 debug/

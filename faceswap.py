@@ -1,7 +1,9 @@
-# faceswap.py
 import numpy as np
 import cv2
 import insightface
+from torchvision.transforms import functional
+import sys
+sys.modules["torchvision.transforms.functional_tensor"] = functional
 import gfpgan
 import io
 from insightface.app import FaceAnalysis

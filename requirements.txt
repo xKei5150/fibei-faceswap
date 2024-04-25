@@ -1,3 +1,5 @@
+basicsr
+facexlib
 insightface
 fastapi
 uvicorn
